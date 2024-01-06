@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model company {
+  companyId        Int                @id @default(autoincrement())
+  companyName      String             @db.VarChar(50)
+  company_category company_category[]
+}
+
+/// This model has been renamed to 'Renamedfunction' during introspection, because the original name 'function' is reserved.
+model Renamedfunction {
+  functionId      Int               @id @default(autoincrement())
+  functionName    String            @db.VarChar(50)
+  module_function module_function[]
+
+  @@map("function")
+}
+
+model module {
+  moduleId        Int               @id @default(autoincrement())
+  moduleName      String            @db.VarChar(50)
+  moduleParentId  Int?
+  categoryId      Int?
+  module          module?           @relation("moduleTomodule", fields: [moduleParentId], references: [moduleId], onDelete: NoAction, onUpdate: NoAction, map: "module_ibfk_1")
+  other_module    module[]          @relation("moduleTomodule")
+  category        category?         @relation(fields: [categoryId], references: [categoryId], onDelete: NoAction, onUpdate: NoAction, map: "module_ibfk_2")
+  module_function module_function[]
+
+  @@index([moduleParentId], map: "moduleParentId")
+  @@index([categoryId], map: "categoryId")
+}
+
+model module_function {
+  moduleId            Int
+  functionId          Int
+  module              module                @relation(fields: [moduleId], references: [moduleId], onDelete: NoAction, onUpdate: NoAction, map: "module_function_ibfk_1")
+  Renamedfunction     Renamedfunction       @relation(fields: [functionId], references: [functionId], onDelete: NoAction, onUpdate: NoAction, map: "module_function_ibfk_2")
+  modulefunction_role modulefunction_role[]
+
+  @@id([moduleId, functionId])
+  @@index([functionId], map: "functionId")
+}
+
+model modulefunction_role {
+  roleId          Int
+  moduleId        Int
+  functionId      Int
+  module_function module_function @relation(fields: [moduleId, functionId], references: [moduleId, functionId], onDelete: NoAction, onUpdate: NoAction, map: "modulefunction_role_ibfk_1")
+
+  @@id([roleId, moduleId, functionId])
+  @@index([moduleId, functionId], map: "moduleId")
+}
+
+model role {
+  roleId    Int    @id @default(autoincrement())
+  roleName  String @db.VarChar(50)
+  companyId Int
+}
+
+model category {
+  categoryId       Int                @id @default(autoincrement())
+  categoryName     String             @db.VarChar(50)
+  company_category company_category[]
+  module           module[]
+}
+
+model company_category {
+  companyId  Int
+  categoryId Int
+  company    company  @relation(fields: [companyId], references: [companyId], onDelete: NoAction, onUpdate: NoAction, map: "company_category_ibfk_1")
+  category   category @relation(fields: [categoryId], references: [categoryId], onDelete: NoAction, onUpdate: NoAction, map: "company_category_ibfk_2")
+
+  @@id([companyId, categoryId])
+  @@index([categoryId], map: "categoryId")
+}
